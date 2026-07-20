@@ -56,7 +56,7 @@ void del_l() {
 
 int main() {
         std::unordered_map<std::string,std::string> pass;
-        pass["NeWt0n"] = "fuhk1all0ruzzians";
+        pass["NeWt0n"] = "fuhk1all0ruzzianss";
 
         std::string user;
         std::string pasen;
