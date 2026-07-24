@@ -5,79 +5,80 @@
 #include <thread>
 #include <string_view>
 #include <conio.h>
+#include <windows.h>
+std::string g_ver = "0.01";
 
-void task_wait(const std::string& tr, int time) {
-    if (tr == "m") 
-        std::this_thread::sleep_for(std::chrono::milliseconds(time));
-    else if (tr == "mm") 
+void print_denis(){
+    std::cout << R"(                                                                                                
+                                          :}<~.                                          .:+]^.                                          
+                                          ]@%#}{{@[*:                              .-<{%{}}#@@=                                          
+                                         .#@@%##{}[[[}@}+.                     :<%%}[[[{{#%%@@>                                          
+                                          }@@@@@@%%##{}[[[{[-              .*{}[[}}{#%%%@@@@@@*                                          
+                                               .-+(%@@%%#{}[[{]:         =#}[}}##%%@@{>=:.                                               
+                                                      .>@@@%{[}@^       }#[}#@@@}=.                                                      
+                                                          .>@@%-         >@@#~                                                           
+                                                                                                                                         
+                                                                                                                                         
+                                                        =%@@@{~          .>%@@%>:                                                        
+                                                       {@@< .(@[.       :@@%= -{@^.                                                      
+                                                     :{@@@%<+<}@}       )@@@{*+(#@*                                                      
+                                                     =@@@@@@@@@@%~     .#@@@@@@@@@#:                                                     
+                                                     >@@@%%%%%%@@^     +@@@%%%%%@@@-                                                     
+                                                     ^@#}[[[[[}#@*     +@{}[[[[[}%@-                                                     
+                                                     -@#))))))<{{      .#}<))))<(%)                                                      
+                                                      =@#>**+^}@=       ^@[^*+*<%{.                                                      
+                                                       -{@@%%@{:         :[@@%@@<.                                                       
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                                                                         
+                                                                                      ~-.                                                
+                                                                                    .-+}@@>.                                             
+                                                                                   .*[@@@@@@<                                            
+                                                                            .~<{@@@%]<<){@@=^@-                                          
+                                                           .:-~~==+>)[%@@@@@#[)*+=~+^*>#@@[.  >(.                                        
+                                                           .~(@%]()<^+=~-:.    :<~.*[@@@@%:                                              
+                                                              -#@[:           .=<(>+^}[%@*                                               
+                                                                :[@@*.         .-=.=+]@%~                                                
+                                                                   -[@@%>~.      :>%@%+                                                  
+                                                                      .:*[@@@@@@@{)-                    )" << std::endl;
+}
+
+void task_wait(int time, std::string type) {
+    // micro - microseconds,mili - miliseconds, sec - seconds, min - minutes
+    if (type == "micro") 
         std::this_thread::sleep_for(std::chrono::microseconds(time));
-    else 
+    else if(type == "mili") 
+        std::this_thread::sleep_for(std::chrono::milliseconds(time));
+    else if (type == "sec") 
         std::this_thread::sleep_for(std::chrono::seconds(time));
-    
+    else if (type == "min")
+        std::this_thread::sleep_for(std::chrono::minutes(time));
+    else 
+    std::cout << "bleh" << '\n';
 }
 
-void faileh(int timers, int times) {
-    std::cout << "ErR0r --- couldn't grasp the bullshit sack of yours asx#1zx4x@x546tx12x8c" << '\n';
-    std::cout << "you will be ganked in " << times <<'\n';
-    for (int i = 0; i<=times; ++i) {
-        std::cout << i << '\n';
-        task_wait("dih",timers);
-    }
+int main(){
+    std::cout << "Enter a username:" << '\n';
+    std::string user = "";
+    std::cin >> user;
+    if (user == "NeWt0nk") {
+        std::cout << "Enter passwords for this user:" << '\n';
+        std::string pass = "";
+        std::cin >> pass;
+        if (pass == "fahk1putinz0") {
+            std::cout << "Login completed, starting the loading sequence of ver " << g_ver <<'\n';
+            std::cout << "printing denis" << '\n';
+            print_denis();
+            task_wait(3,"sec");
+            // loading function or whatever
+        } else
+        std::cout << "Wrong password" << '\n';
+    } else 
+    std::cout << "No such user found" << '\n';
     std::cout << std::endl;
-}
-
-std::string invtext() {
-    char ch;
-    std::string inpt = "";
-
-    while (true) {
-
-        ch = _getch();
-        if (ch == '\r') {
-            std::cout<<std::endl;
-            break;
-        }else if (ch == '\b') {
-            if (!inpt.empty()) {
-                inpt.pop_back();
-                std::cout << "\b \b";
-            }
-        }else {
-            inpt += ch;
-            std::cout << "*";
-        }
-    }
-
-    return inpt;
-}
-
-void del_l() {
-    std::cout << "\x1b[1A" << "\x1b[2K" << std::flush;
-}
-
-int main() {
-        std::unordered_map<std::string,std::string> pass;
-        pass["NeWt0n"] = "fuhk1all0ruzzianss";
-
-        std::string user;
-        std::string pasen;
-
-        std::cout << "enter user" << '\n';
-        std::getline(std::cin,user);
-        del_l();
-        if (pass.find(user) != pass.end()) {
-            std::cout << "enter pass" << '\n';
-            pasen = invtext();
-            if (pass[user] == pasen){
-                del_l();
-                std::cout<<"Login completed, --> moving onto loading sequence.."<<'\n';
-                task_wait("1",5);
-            }else
-                faileh(1,10);
-        
-        }
-        else{
-            faileh(1,5);
-        }
-        std::cout << std::endl;
     return 0;
 }
