@@ -36,13 +36,13 @@ int main(int argc,char* argv[]){
     SDL_Event e;
     while (run) {
         while (e.type = SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) run = false; break;
+            if (e.type == SDL_EVENT_QUIT) run = false;}
 
-            SDL_SetRenderDrawColor(renderer,30, 30, 40, 255);
-            SDL_RenderClear(renderer);
-            SDL_RenderTexture(renderer,image,nil,nil);
-            SDL_RenderPresent(renderer);
-        }
+        SDL_SetRenderDrawColor(renderer,30, 30, 40, 255);
+        SDL_RenderClear(renderer);
+        SDL_RenderTexture(renderer,image,nil,nil);
+        SDL_RenderPresent(renderer);
+            
     }
 
     // cleanup
