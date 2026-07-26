@@ -7,3 +7,5 @@
 /vcpkg-configuration.json
 /vcpkg.json
 /build
+/SDL3_image
+/test.jpg
