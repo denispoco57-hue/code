@@ -6,7 +6,7 @@ int main(int argc,char* argv[]){
         return 1;
     }
 
-    SDL_Window* window = SDL_CreateWindow("testing", 800,600,0);
+    SDL_Window* window = SDL_CreateWindow("testing", 800,600,SDL_WINDOW_BORDERLESS);
 
     if (!window) {
         std::cerr << "window couldnt be created = " << SDL_GetError() << '\n';
