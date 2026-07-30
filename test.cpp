@@ -1,105 +1,96 @@
 #include "lib.hpp"
 
+int math_random(int s, int e) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> distrib(s,e);
+    return distrib(gen);
+}
+void task_wait(int time) {
+    if (time >= 1 ) 
+        std::this_thread::sleep_for(std::chrono::seconds(time));
+    else if (time >= 0.001 and time < 1)
+        std::this_thread::sleep_for(std::chrono::milliseconds(time*1000));
+}
 
 int main(int argc,char* argv[]){
-
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cerr << "cant initialize video = " << SDL_GetError() << '\n';
-        return 1;}
-    
-    SDL_Window* window = SDL_CreateWindow("new_sec",100,100,SDL_WINDOW_BORDERLESS);
-    if (!window) {
-        std::cerr << "window could not be created = " << SDL_GetError() << '\n';
+    if (!SDL_INIT_VIDEO) {
+        std::cerr << "couldnt initialize vid in SDL = " << SDL_GetError() << '\n';
+        return 1;
+    }
+    if (!TTF_Init()) {
+        std::cerr << "couldnt initialize ttf in SDL = " << SDL_GetError() << '\n';
+        return 1;
+    }
+    SDL_Window* win = SDL_CreateWindow("...",675,888,SDL_WINDOW_FULLSCREEN);
+    if (!win) {
+        std::cerr << "couldnt create a window in SDL = " << SDL_GetError() << '\n';
         SDL_Quit();
-        return 1;}
-
-    SDL_Renderer* rend = SDL_CreateRenderer(window,nil);
+        return 1;
+    }
+    SDL_Renderer* rend = SDL_CreateRenderer(win,nil);
     if (!rend) {
-        std::cerr << "renderer could not be created = " << SDL_GetError() << '\n';
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;}
-
-    AVFormatContext* fc = nil;
-    if (avformat_open_input(&fc,"D:/vs/code/lego.mp4",nil,nil) < 0) {
-        std::cerr << "couldnt open the video file \n";
-        SDL_DestroyWindow(window);
-        SDL_DestroyRenderer(rend);
+        std::cerr << "couldnt create a renderer in SDL = " << SDL_GetError() << '\n';
+        SDL_DestroyWindow(win);
         SDL_Quit();
         return 1;
     }
-    avformat_find_stream_info(fc,nil);
-
-    const AVCodec* codec = nil;
-    int vid_id = av_find_best_stream(fc,AVMEDIA_TYPE_VIDEO,-1,-1,&codec,0);
-    if (vid_id  < 0) {
-        std::cerr << "couldt find a stream \n";
-        avformat_close_input(&fc);
-        SDL_DestroyWindow(window);
+    TTF_Font* font = TTF_OpenFont("D:/vs/code/fonts/RobotoCondensed-Regular.ttf",32.0f);
+    if (!font) {
+        std::cerr << "couldnt open font in SDL = " << SDL_GetError() << '\n';
         SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(win);
         SDL_Quit();
         return 1;
     }
+    std::string fullt1 = "_ L0ad1ing, please wa1t ^";
+    int fullt1_l = fullt1.length();
+    size_t start = 1;
+    SDL_Color w255 = {255,255,255,255};
+    SDL_Texture* ttext = nil;
+    SDL_FRect dst = {0};
 
-    AVCodecContext* cc = avcodec_alloc_context3(codec);
-    avcodec_parameters_to_context(cc,fc->streams[vid_id]->codecpar);
-    if (avcodec_open2(cc,codec,nil)<0) {
-        std::cerr << "codec wasnt able to open himself 😭\n";
-        avformat_close_input(&fc);
-        avcodec_free_context(&cc);
-        SDL_DestroyWindow(window);
-        SDL_DestroyRenderer(rend);
-        SDL_Quit(); 
-        return 1;
-    }
 
-    AVPacket* pack = av_packet_alloc();
-    AVFrame* frm = av_frame_alloc();
-    
-    SDL_Texture* img = SDL_CreateTexture(rend,SDL_PIXELFORMAT_IYUV,SDL_TEXTUREACCESS_STREAMING,cc->width,cc->height);
-    bool run = true;
+    bool check = false;
     SDL_Event e;
-
-    while (run){
+    bool run = true;
+    while (run) {
         while (SDL_PollEvent(&e)) {
-            if (e.type == SDL_EVENT_QUIT) {
-                std::cout<<"exiting..."<<'\n';
-                run = false;
-            } 
+            if (e.type == SDL_EVENT_QUIT) run = false;
         }
-        if (av_read_frame(fc,pack) >= 0){
-            if (pack->stream_index == vid_id) {
-                if (avcodec_send_packet(cc,pack) == 0) {
-                    while (avcodec_receive_frame(cc,frm) == 0){
-                       SDL_UpdateYUVTexture(img, nil,
-                            frm->data[0], frm->linesize[0],
-                            frm->data[1], frm->linesize[1],
-                            frm->data[2], frm->linesize[2]);
-
-                        SDL_RenderClear(rend);
-                        SDL_RenderTexture(rend,img,nil,nil);
-                        SDL_RenderPresent(rend);
-
-                        SDL_Delay(16);
-                    }
-                }
-            }
-            av_packet_unref(pack);
-        } else {
-            av_seek_frame(fc, vid_id, 0, AVSEEK_FLAG_BACKWARD);
-            avcodec_flush_buffers(cc);
+        if (check == false) {
+            check = true;
+            task_wait(math_random(100,1000)/250);
         }
-
+        while (start != fullt1_l) {
+        if (ttext) SDL_DestroyTexture(ttext);
+        std::string_view partial(fullt1.data(),start);
+        SDL_Surface* tsurf = TTF_RenderText_Blended(font,std::string(partial).c_str(),0,w255);
+        ttext = SDL_CreateTextureFromSurface(rend,tsurf);
+        SDL_FRect dst = {1,1,(float)tsurf->w,(float)tsurf->h};
+        SDL_SetRenderDrawColor(rend,0, 0, 0, 0);
+        SDL_RenderClear(rend);
+        SDL_RenderTexture(rend,ttext,nil,&dst);
+        SDL_RenderPresent(rend);
+        start++;
+        task_wait(math_random(100,1000)/1000);
+        }
+        if (ttext) SDL_DestroyTexture(ttext);
+        SDL_Surface* tsurf = TTF_RenderText_Blended(font,fullt1.data(),0,w255);
+        ttext = SDL_CreateTextureFromSurface(rend,tsurf);
+        SDL_FRect dst = {1,1,(float)tsurf->w,(float)tsurf->h};
+        SDL_SetRenderDrawColor(rend,0, 0, 0, 0);
+        SDL_RenderClear(rend);
+        SDL_RenderTexture(rend,ttext,nil,&dst);
+        SDL_RenderPresent(rend);
     }
-    // cleanup
-    av_frame_free(&frm);
-    av_packet_free(&pack);
-    avcodec_free_context(&cc);
-    avformat_close_input(&fc);
 
-    SDL_DestroyTexture(img);
+    //cleanup
+    SDL_DestroyTexture(ttext);
+    TTF_CloseFont(font);
+    TTF_Quit();
     SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(win);
     SDL_Quit();
     std::cout<<std::endl;
     return 0;
