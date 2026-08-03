@@ -1,6 +1,7 @@
 // define
 #define nil nullptr
 //c++
+#include <fstream>
 #include <iostream>
 #include <unordered_map>
 #include <string>
@@ -23,4 +24,5 @@ extern "C" {
 }
 // ttf
 #include <SDL3_ttf/SDL_ttf.h>
+
 

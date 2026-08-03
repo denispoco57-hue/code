@@ -1,5 +1,7 @@
 #include "lib.hpp"
 
+std::string const vers = "0.12.0 twttf";
+
 int math_random(int s, int e) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
@@ -31,7 +33,7 @@ int main(int argc,char* argv[]){
         SDL_Quit();
         return 1;
     }
-    TTF_Font* font = TTF_OpenFont("D:/vs/code/fonts/RobotoCondensed-Regular.ttf",32.0f);
+    TTF_Font* font = TTF_OpenFont("D:/vs/code/fonts/GeistPixel-Regular-VariableFont_ELSH.ttf",32.0f);
     if (!font) {
         std::cerr << "couldnt open font in SDL = " << SDL_GetError() << '\n';
         SDL_DestroyRenderer(rend);
@@ -41,6 +43,7 @@ int main(int argc,char* argv[]){
     }
 
     struct text {
+        SDL_Color clr;
         float x;
         float y;
         std::string tix;
@@ -50,29 +53,56 @@ int main(int argc,char* argv[]){
         SDL_Texture* tit;
         SDL_FRect dsts;
     };
-    
+
+    SDL_Color w255 = {255,255,255,255};
+    SDL_Color geen = {0, 255, 0, 255};
+    SDL_Color red = {255,0,0,255};
+
     std::vector<ttext> ttexty;
     std::vector<text> texty;
+    std::vector<std::string> sty;
 
-    text t1 = {1,1, "_ L0ad1ing, please wa1t ^"};
-    text t2 = {1,40, "[  6.7065234] sd 0:0:0:0:0dbdbu25 [New] Assuming drive cache: write through"};
-    text t3 = {1,80, "Valid path for Init Volume"};
-    text t4 = {1,160, "---------------------------------"};
-    text t5 = {1,200, "kolko is gey?"};
-    text t6 = {1,250, "noooo way"};
-    text t7 = {1,290, "🤐🤐"};
+    std::ifstream input("D:/vs/code/info.txt");
 
+    if (!input.is_open()) {
+        std::cerr << "couldnt open txt file" << '\n';
+        return 1;
+    }
+    std::string bleh;
 
-     texty = {t1,t2,t3,t4,t5,t6,t7};
+    while (std::getline(input,bleh)){
+        sty.push_back(bleh);
+    }
+
+    texty.emplace_back(w255,1,1, sty[0]);
+    texty.emplace_back(w255,1,40, sty[1]);
+    texty.emplace_back(w255,1,80, sty[2]);
+    texty.emplace_back(w255,1,140, sty[3]);
+    texty.emplace_back(w255,1,200, sty[4] + std::to_string(math_random(103,15032)) + sty[5]);
+    texty.emplace_back(w255,1,250, sty[6]);
+    texty.emplace_back(w255,1,290, sty[7]);
+    texty.emplace_back(w255,1,320,sty[3]);
+    texty.emplace_back(w255,1,350,sty[8]);
+    texty.emplace_back(w255,1000, 350 ,sty[9]);
+    texty.emplace_back(geen,1100,350,sty[10]);
+    texty.emplace_back(w255,1,390,sty[11]);
+    texty.emplace_back(w255,1000, 390 ,sty[9]);
+    texty.emplace_back(geen,1100,390,sty[10]);
+    texty.emplace_back(w255,1,450,sty[12]);
+    texty.emplace_back(red,1,500,sty[13]);
+    texty.emplace_back(red,1,550, sty[14]);
+    texty.emplace_back(geen,900,550, sty[15]);
+    texty.emplace_back(geen,1,600, sty[16]);
+    texty.emplace_back(w255,1,650,sty[17] + vers);
+    texty.emplace_back(geen,1,700, sty[18]);
+
+    sty.clear();
 
     std::string str = " ";
     size_t len = 0;
     size_t start = 1;
-    SDL_Color w255 = {255,255,255,255};
     SDL_Texture* tetext = nil;
     SDL_FRect dst = {0};
-
-    
 
     bool check = false;
     bool done = false;
@@ -91,61 +121,69 @@ int main(int argc,char* argv[]){
         if (!done) {
             for (size_t g = 0; g < texty.size();++g) {
 
-            if (tetext != nil) SDL_DestroyTexture(tetext);
-            tetext = nil;
-
-            str = texty[g].tix;
-            len = str.length();
-            start = 1;
-
-            while (start < len) {
-
-                while (SDL_PollEvent(&e)) { // FIX: stay responsive to quit while typing, not just between lines
-                        if (e.type == SDL_EVENT_QUIT) run = false;
-                    }
-                if (!run) break;
-
-                std::string partial(str.data(),start);
-                SDL_Surface* surf = TTF_RenderText_Blended(font,partial.c_str(),0,w255);
-
                 if (tetext != nil) SDL_DestroyTexture(tetext);
+                tetext = nil;
 
-                tetext = SDL_CreateTextureFromSurface(rend,surf);
-                dst = {texty[g].x,texty[g].y,(float)surf->w,(float)surf->h};
+                str = texty[g].tix;
+                len = str.length();
+                start = 1;
 
-                SDL_DestroySurface(surf);
 
-                SDL_SetRenderDrawColor(rend,0,0,0,0);
-                SDL_RenderClear(rend);
+                while (start < len) {
 
-                if (!ttexty.empty()) {
-                    for (size_t i = 0; i < ttexty.size(); ++i) { // FIX: .size(), not sizeof()
-                        SDL_RenderTexture(rend,ttexty[i].tit,nil,&ttexty[i].dsts); // FIX: tit is a pointer now, no &
+                    while (SDL_PollEvent(&e)) { 
+                            if (e.type == SDL_EVENT_QUIT) run = false;
+                        }
+                    if (!run) break;
+
+                    std::string partial(str.data(),start);
+                    partial = partial + "⬛";
+                    SDL_Surface* surf = TTF_RenderText_Blended(font,partial.c_str(),0,texty[g].clr);
+
+                    if (tetext != nil) SDL_DestroyTexture(tetext);
+
+                    tetext = SDL_CreateTextureFromSurface(rend,surf);
+                    dst = {texty[g].x,texty[g].y,(float)surf->w,(float)surf->h};
+
+                    SDL_DestroySurface(surf);
+
+                    SDL_SetRenderDrawColor(rend,0,0,0,0);
+                    SDL_RenderClear(rend);
+
+                    if (!ttexty.empty()) {
+                        for (size_t i = 0; i < ttexty.size(); ++i) { 
+                            SDL_RenderTexture(rend,ttexty[i].tit,nil,&ttexty[i].dsts); 
+                        }
                     }
-                }
 
-                SDL_RenderTexture(rend,tetext,nil,&dst);
-                SDL_RenderPresent(rend);
+                    SDL_RenderTexture(rend,tetext,nil,&dst);
+                    SDL_RenderPresent(rend);
 
-                task_wait(0.03f);
-                ++start;
+                    task_wait(math_random(100,1000)/20000.0f);
+                    ++start;
             }
+            
+
             if (!run) break;
 
             if (tetext) SDL_DestroyTexture(tetext);
-            SDL_Surface* surf = TTF_RenderText_Blended(font,str.c_str(),0,w255);
+            SDL_Surface* surf = TTF_RenderText_Blended(font,str.c_str(),0,texty[g].clr);
             tetext = SDL_CreateTextureFromSurface(rend,surf);
             dst = {texty[g].x,texty[g].y,(float)surf->w,(float)surf->h};
             ttexty.emplace_back(tetext,dst);
             tetext = nil;
             SDL_DestroySurface(surf);
+
+            done = true;
+
          }
         }
-        done = true;
+        
 
     }
 
     //cleanup
+
     if (tetext) SDL_DestroyTexture(tetext);
     for (auto& t : ttexty ) SDL_DestroyTexture(t.tit);
     TTF_CloseFont(font);
