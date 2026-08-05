@@ -1,6 +1,6 @@
 #include "lib.hpp"
 
-std::string const vers = "0.12.0 twttf";
+std::string const vers = "0.13.1 mixer";
 
 int math_random(int s, int e) {
     static std::random_device rd;
@@ -12,8 +12,13 @@ void task_wait(float time) {std::this_thread::sleep_for(std::chrono::millisecond
 
 
 int main(int argc,char* argv[]){
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cerr << "couldnt initialize vid in SDL = " << SDL_GetError() << '\n';
+
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+        std::cerr << "couldnt initialize vid or audio in SDL = " << SDL_GetError() << '\n';
+        return 1;
+    }
+    if (!MIX_Init()) {
+        std::cerr << "couldnt initialize mix = " << SDL_GetError() << '\n';
         return 1;
     }
     if (!TTF_Init()) {
@@ -27,6 +32,9 @@ int main(int argc,char* argv[]){
         return 1;
     }
     SDL_Renderer* rend = SDL_CreateRenderer(win,nil);
+    SDL_SetRenderVSync(rend,SDL_RENDERER_VSYNC_ADAPTIVE);
+
+    
     if (!rend) {
         std::cerr << "couldnt create a renderer in SDL = " << SDL_GetError() << '\n';
         SDL_DestroyWindow(win);
@@ -35,12 +43,35 @@ int main(int argc,char* argv[]){
     }
     TTF_Font* font = TTF_OpenFont("D:/vs/code/fonts/GeistPixel-Regular-VariableFont_ELSH.ttf",32.0f);
     if (!font) {
-        std::cerr << "couldnt open font in SDL = " << SDL_GetError() << '\n';
+        std::cerr << "couldnt open font in SDL D:/vs/code/fonts/GeistPixel-Regular-VariableFont_ELSH.ttf = " << SDL_GetError() << '\n';
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
         return 1;
     }
+    MIX_Mixer* mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,nil);
+    if (!mixer) {
+        std::cerr << "couldnt create a mixer = " << SDL_GetError() << '\n';
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
+    }
+
+    MIX_Audio* audio = MIX_LoadAudio(mixer,"D:/vs/code/sfx/loading.mp3",false);
+    if (!audio) {
+        std::cerr << " couldnt load audio D:/vs/code/sfx/loading.mp3 = " << SDL_GetError() << '\n';
+        SDL_DestroyRenderer(rend);
+        MIX_DestroyMixer(mixer);
+        SDL_DestroyWindow(win);
+        SDL_Quit();
+        return 1;
+    }
+    MIX_Track* track = MIX_CreateTrack(mixer);
+    if (!track) {
+        std::cerr << "couldnt create a track = " << SDL_GetError() << '\n';
+    }
+    MIX_SetTrackAudio(track,audio);
 
     struct text {
         SDL_Color clr;
@@ -65,7 +96,7 @@ int main(int argc,char* argv[]){
     std::ifstream input("D:/vs/code/info.txt");
 
     if (!input.is_open()) {
-        std::cerr << "couldnt open txt file" << '\n';
+        std::cerr << "couldnt open txt file D:/vs/code/info.txt" << '\n';
         return 1;
     }
     std::string bleh;
@@ -97,6 +128,8 @@ int main(int argc,char* argv[]){
     texty.emplace_back(geen,1,700, sty[18]);
 
     sty.clear();
+    input.clear();
+    input.close();
 
     std::string str = " ";
     size_t len = 0;
@@ -111,14 +144,19 @@ int main(int argc,char* argv[]){
     SDL_Event e;
 
     while (run) {
+        task_wait(0.001);
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) run = false;
         }
         if (check == false) {
+            
             check = true;
             task_wait(math_random(100,1000)/100.0f);
+            MIX_PlayTrack(track,0);
+
         }
         if (!done) {
+
             for (size_t g = 0; g < texty.size();++g) {
 
                 if (tetext != nil) SDL_DestroyTexture(tetext);
@@ -131,11 +169,8 @@ int main(int argc,char* argv[]){
 
                 while (start < len) {
 
-                    while (SDL_PollEvent(&e)) { 
-                            if (e.type == SDL_EVENT_QUIT) run = false;
-                        }
-                    if (!run) break;
-
+                    if (e.type == SDL_EVENT_QUIT) run = false;
+                        
                     std::string partial(str.data(),start);
                     partial = partial + "⬛";
                     SDL_Surface* surf = TTF_RenderText_Blended(font,partial.c_str(),0,texty[g].clr);
@@ -143,6 +178,7 @@ int main(int argc,char* argv[]){
                     if (tetext != nil) SDL_DestroyTexture(tetext);
 
                     tetext = SDL_CreateTextureFromSurface(rend,surf);
+                    std::cerr << "making texture" << '\n';
                     dst = {texty[g].x,texty[g].y,(float)surf->w,(float)surf->h};
 
                     SDL_DestroySurface(surf);
@@ -159,9 +195,9 @@ int main(int argc,char* argv[]){
                     SDL_RenderTexture(rend,tetext,nil,&dst);
                     SDL_RenderPresent(rend);
 
-                    task_wait(math_random(100,1000)/20000.0f);
+                    task_wait(math_random(100,1000)/25000.0f);
                     ++start;
-            }
+                 }
             
 
             if (!run) break;
@@ -175,11 +211,15 @@ int main(int argc,char* argv[]){
             SDL_DestroySurface(surf);
 
             done = true;
+            std::cerr << "done" << '\n';
 
          }
+         std::cerr << "clearing in the end for testing" << '\n';
+        SDL_SetRenderDrawColor(rend,0,0,0,0);
+        SDL_RenderClear(rend);
         }
         
-
+        
     }
 
     //cleanup
@@ -191,6 +231,7 @@ int main(int argc,char* argv[]){
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(win);
     SDL_Quit();
+    MIX_Quit();
     std::cout<<std::endl;
     return 0;
 }  
