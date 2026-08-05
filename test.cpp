@@ -32,8 +32,8 @@ int main(int argc,char* argv[]){
         return 1;
     }
     SDL_Renderer* rend = SDL_CreateRenderer(win,nil);
-    SDL_SetRenderVSync(rend,SDL_RENDERER_VSYNC_ADAPTIVE);
 
+    SDL_SetRenderVSync(rend,SDL_RENDERER_VSYNC_ADAPTIVE);
     
     if (!rend) {
         std::cerr << "couldnt create a renderer in SDL = " << SDL_GetError() << '\n';
@@ -51,7 +51,7 @@ int main(int argc,char* argv[]){
     }
     MIX_Mixer* mixer = MIX_CreateMixerDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,nil);
     if (!mixer) {
-        std::cerr << "couldnt create a mixer = " << SDL_GetError() << '\n';
+        std::cerr << "couldnt create an mixer = " << SDL_GetError() << '\n';
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(win);
         SDL_Quit();
