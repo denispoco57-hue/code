@@ -1,12 +1,12 @@
 #include "lib.hpp"
 
-std::string const vers = "0.13.1 mixer";
+std::string const vers = "0.13.2 mixerf";
 
 bool check;
 bool run;
 bool done;
 
-std::vector<Uint8> render_draw_color;
+std::vector<Uint8> render_draw_color = {0,0,0,0};
 
 SDL_Renderer* rend;
 SDL_Window* win;
@@ -24,52 +24,69 @@ struct done_render {
     SDL_FRect dsts;
 };
 
-std::vector<done_render> done_render_text;
+std::vector<std::vector<done_render>> main_textures(2);
+//so the first vector contains structs which are already done animating, and can be merged
+//second contains structs which are still in animation
 std::vector<base_render> base_render_text;
 std::vector<std::string> sty;
 
+/// @brief returns a  random number from s-e (ints)
+/// @param s the start int
+/// @param e the end int
+/// @return a random number from s to e
 int math_random(int s, int e) {
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<int> distrib(s,e);
     return distrib(gen);
 }
+
+/// @brief uses this_thread sleep for, genuinly similar to lua task_wait() - accepts floats
+/// @param time time (float)
 void task_wait(float time) {std::this_thread::sleep_for(std::chrono::milliseconds((int)(time*1000)));}
-void type_writer(TTF_Font* font,const std::string& current,float x, float y, SDL_Color color){
-     for (size_t g = 0; g < current.length();++g) {
-
-        std::string partial(current.data(),g);
-        partial += "🥱";
-
-
-        SDL_Surface* c_surface = TTF_RenderText_Blended(font,partial.c_str(),0,color);
-        SDL_Texture* c_texture = SDL_CreateTextureFromSurface(rend,c_surface);
-        SDL_FRect dst = {x,y,(float)c_surface->w,(float)c_surface->h};
-
-        SDL_SetRenderDrawColor(rend,render_draw_color[0],render_draw_color[1],render_draw_color[2],render_draw_color[3]);
-        SDL_RenderClear(rend);
-
-        SDL_RenderTexture(rend,c_texture,nil,&dst);
-
-        SDL_DestroySurface(c_surface);
-
-        if (!done_render_text.empty()) {
-            for (size_t jerk = 0; jerk < done_render_text.size(); ++jerk) SDL_RenderTexture(rend,done_render_text[jerk].tit,nil,&done_render_text[jerk].dsts);
-            
-        }
-
-        SDL_RenderPresent(rend);
-        task_wait(math_random(100,1000)/25000.0f);
-    }
-
-
-    SDL_Surface* c_surface = TTF_RenderText_Blended(font,current.c_str(),0,color);
-    SDL_Texture* c_texture = SDL_CreateTextureFromSurface(rend,c_surface);
-    SDL_FRect dst = {x,y,(float)c_surface->w,(float)c_surface->h};
-    done_render_text.emplace_back(c_texture,dst);
-    SDL_DestroySurface(c_surface);
-    
+/// @brief renders textures in main_textures depending on the type
+/// @param type 0 = render from the main_textures[0], 1 = corresponding to [1], 2 means render from both
+void render_all_textures(int type){
+    if (type == 0 or type == 2) for (size_t bob = 0; bob < main_textures[0].size();++bob) SDL_RenderTexture(rend,main_textures[0][bob].tit,0,&main_textures[0][bob].dsts);
+    if (type == 1 or type == 2) for (size_t bob = 0; bob < main_textures[1].size();++bob) SDL_RenderTexture(rend,main_textures[1][bob].tit,0,&main_textures[1][bob].dsts);
 }
+/// @brief  type writer text test
+/// @param font  TTF_Font*
+/// @param current  std::string
+/// @param x float
+/// @param y float
+/// @param color SDL_color
+/// @param cor_X int starting point of the type curve etc, anyhting if type = -1
+/// @param cor_Y int starting point of the type curve etc, anything if type = -1
+/// @param type int -2; appear but with transparency tween; -1 - just appear; 0 - linear; 1 - bezier curve with 2 points ( will make later)
+/// @param time float; time for the linear bezier transparency etc, anything if type = -1
+void type_writer(TTF_Font* font, const std::string& current, float x, float y, SDL_Color color, int type, int cor_X, int cor_Y, int time) {
+    std::vector<std::string> letters;
+    for (char c : current) letters.emplace_back(1, c); 
+    float cur_x = x;
+
+    if (type == -1) {
+        for (size_t i = 0; i < letters.size(); ++i) {
+            SDL_Surface* c_surface = TTF_RenderText_Blended(font, letters[i].c_str(), 0, color);
+            if (!c_surface) continue;
+
+            SDL_Texture* c_texture = SDL_CreateTextureFromSurface(rend, c_surface);
+            SDL_FRect dst { cur_x, y, (float)c_surface->w, (float)c_surface->h };
+            cur_x += c_surface->w;
+
+            SDL_SetRenderDrawColor(rend, render_draw_color[0], render_draw_color[1], render_draw_color[2], render_draw_color[3]);
+            SDL_RenderClear(rend);
+            main_textures[1].emplace_back(c_texture, dst);
+            SDL_RenderTexture(rend, c_texture, nil, &dst);
+            render_all_textures(2);
+            SDL_DestroySurface(c_surface);
+
+            SDL_RenderPresent(rend);
+            task_wait(0.01f);
+        }
+    }
+}
+
 
 int main(int argc,char* argv[]){
 
@@ -189,27 +206,27 @@ int main(int argc,char* argv[]){
     SDL_Event e;
 
     while (run) {
-        task_wait(0.001);
+        task_wait(0.016f);
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) run = false;
         }
         if (check == false) {
-            
             check = true;
             task_wait(math_random(100,1000)/1000.0f);
             MIX_PlayTrack(track,0);
-
         }
         if (!done) {
             render_draw_color = {0,0,0,0};
-            for (int lox = 0; lox < base_render_text.size();++lox) type_writer(font,base_render_text[lox].tix,base_render_text[lox].x,base_render_text[lox].y,base_render_text[lox].clr);
+            for (int lox = 0; lox < base_render_text.size();++lox) type_writer(font,base_render_text[lox].tix,base_render_text[lox].x,base_render_text[lox].y,base_render_text[lox].clr,-1,math_random(-10,10),math_random(-10,10),1);
         }
         done = true;
     }
 
     //cleanup
 
-    for (auto& t : done_render_text ) SDL_DestroyTexture(t.tit);
+    for (auto& t : main_textures[0] ) SDL_DestroyTexture(t.tit);
+    for (auto& t : main_textures[1] ) SDL_DestroyTexture(t.tit);
+
     TTF_CloseFont(font);
     TTF_Quit();
     SDL_DestroyRenderer(rend);

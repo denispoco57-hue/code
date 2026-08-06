@@ -1,6 +1,7 @@
 // define
 #define nil nullptr
 //c++
+#include <future>
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
@@ -13,6 +14,7 @@
 #include <random>
 #include <array>
 #include <algorithm>
+#include <mutex>
 // sdl3
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
